@@ -2,6 +2,7 @@
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using ScraperForBet.Core.Enums;
+using System.Collections.ObjectModel;
 
 namespace ScraperForBet.Core.Helpers
 {
@@ -53,6 +54,18 @@ namespace ScraperForBet.Core.Helpers
             }
 
             return element;
+        }
+
+        public static ReadOnlyCollection<IWebElement> GetListWebElementsByDataTestId(this ChromeDriver driver, string dataTestId)
+        {
+            ReadOnlyCollection<IWebElement>? elements = driver.FindElements(By.CssSelector($"[data-testid='{dataTestId}']"));
+
+            if (elements is null || elements?.Count == 0)
+            {
+                throw new NoSuchElementException($"Elements with data-testid '{dataTestId}' not found.");
+            }
+
+            return elements!;
         }
 
         public static void ClickElement(this ChromeDriver driver, IWebElement element)
