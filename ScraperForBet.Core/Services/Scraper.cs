@@ -3,6 +3,7 @@ using OpenQA.Selenium.Chrome;
 using ScraperForBet.Core.Helpers;
 using ScraperForBet.Core.Models;
 using System.Collections.ObjectModel;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ScraperForBet.Core.Services
 {
@@ -128,19 +129,18 @@ namespace ScraperForBet.Core.Services
         private static void GetTeamsName(this ChromeDriver driver, Match match)
         {
             ReadOnlyCollection<IWebElement> teamsElements_Names = driver.GetListWebElementsByClass("fIvzGZ"); // Names;
-            IWebElement? teamsElements_Team1 = driver.GetListWebElementsByDataTestId("left_team").FirstOrDefault();
-            IWebElement? teamsElements_Team2 = driver.GetListWebElementsByDataTestId("right_team").FirstOrDefault();
+            ReadOnlyCollection<IWebElement> teamsElements_Misc = driver.GetListWebElementsByClass("jmRURX"); // Etc;
 
-            if (teamsElements_Names is null || teamsElements_Names.Count < 2 || teamsElements_Team1 is null || teamsElements_Team2 is null)
+            if (teamsElements_Names is null || teamsElements_Names.Count < 2 || teamsElements_Misc is null || teamsElements_Misc.Count < 2)
             {
                 throw new Exception("There was a failure in retrieving the information for both teams");
             }
 
-            match.Team1.Image = teamsElements_Team1.FindElement(By.TagName("a")).GetAttribute("href");
+            match.Team1.Image = teamsElements_Misc[0].GetAttribute("src");
             match.Team1.Id = MiscHelper.GetIdFromTeamImageUrl(match.Team1.Image);
             match.Team1.Name = teamsElements_Names[0].Text;
 
-            match.Team2.Image = teamsElements_Team2.FindElement(By.TagName("a")).GetAttribute("href");
+            match.Team2.Image = teamsElements_Misc[1].GetAttribute("src");
             match.Team2.Id = MiscHelper.GetIdFromTeamImageUrl(match.Team2.Image);
             match.Team2.Name = teamsElements_Names[1].Text;
         }
