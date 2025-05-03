@@ -1,4 +1,6 @@
-﻿using ScraperForBet.Core.Services;
+﻿using ScraperForBet.Core.Models;
+using ScraperForBet.Core.Services;
 
-Scraper.Main();
+Console.Title = Constants.Title;
+Scraper.Run();
 Console.ReadKey();

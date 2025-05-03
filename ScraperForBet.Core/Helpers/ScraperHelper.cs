@@ -18,7 +18,7 @@ namespace ScraperForBet.Core.Helpers
             }
 
             // options.AddArgument("--disable-javascript"); // Limitar o uso do javascript; 
-            options.AddUserProfilePreference("profile.managed_default_content_settings.images", 2); // Desabilitar imagens;
+            // options.AddUserProfilePreference("profile.managed_default_content_settings.images", 2); // Desabilitar imagens;
             options.AddUserProfilePreference("profile.managed_default_content_settings.stylesheets", 2); // Desabilitar CSS;
             options.AddUserProfilePreference("profile.managed_default_content_settings.fonts", 2); // Desabilitar fontes;
 
@@ -68,6 +68,18 @@ namespace ScraperForBet.Core.Helpers
             return elements!;
         }
 
+        public static ReadOnlyCollection<IWebElement> GetListWebElementsByClass(this ChromeDriver driver, string className)
+        {
+            ReadOnlyCollection<IWebElement>? elements = driver.FindElements(By.ClassName(className));
+
+            if (elements is null || elements?.Count == 0)
+            {
+                throw new NoSuchElementException($"Elements with class '{className}' not found.");
+            }
+
+            return elements!;
+        }
+
         public static void ClickElement(this ChromeDriver driver, IWebElement element)
         {
             try
@@ -77,7 +89,32 @@ namespace ScraperForBet.Core.Helpers
             }
             catch (Exception ex)
             {
-                throw new Exception($"There was an error clicking the element '{element.TagName}': {ex.Message}.");
+                throw new Exception($"There was an error clicking the element ({nameof(ClickElement)}) '{element.TagName}': {ex.Message}.");
+            }
+        }
+
+        public static void ClickElementSmart(this ChromeDriver driver, IWebElement element)
+        {
+            try
+            {
+                // Try native click first;
+                element.Click();
+                Console.WriteLine($"Button {element.TagName} clicked successfully!");
+            }
+            catch
+            {
+                try
+                {
+                    // Scroll and JS click;
+                    ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView({block: 'center'});", element);
+                    Thread.Sleep(100);
+                    ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].click();", element);
+                    Console.WriteLine($"Button {element.TagName} clicked successfully!");
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"There was an error clicking the element ({nameof(ClickElementSmart)}) '{element.TagName}': {ex.Message}.");
+                }
             }
         }
 
