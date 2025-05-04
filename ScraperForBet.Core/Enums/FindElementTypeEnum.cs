@@ -1,6 +1,6 @@
 ﻿namespace ScraperForBet.Core.Enums
 {
-   public enum FindElementTypeEnum
+    public enum FindElementTypeEnum
     {
         Equals,
         Contains

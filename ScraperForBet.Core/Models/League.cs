@@ -1,8 +1,7 @@
-﻿namespace ScraperForBet.Core.Models
+﻿namespace ScraperForBet.Core.Models;
+
+public sealed class League
 {
-    public sealed class League
-    {
-        public string? Country { get; set; }
-        public string? Name { get; set; }
-    }
+    public string? Country { get; set; }
+    public string? Name { get; set; }
 }
