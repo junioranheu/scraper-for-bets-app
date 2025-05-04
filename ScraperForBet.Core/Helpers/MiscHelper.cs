@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using TimeZoneConverter;
 
 namespace ScraperForBet.Core.Helpers
 {
@@ -54,6 +55,12 @@ namespace ScraperForBet.Core.Helpers
             }
 
             return int.Parse(match.Groups[1].Value);
+        }
+
+        public static DateTime GetDateTime()
+        {
+            TimeZoneInfo timeZone = TZConvert.GetTimeZoneInfo("E. South America Standard Time");
+            return TimeZoneInfo.ConvertTime(DateTime.UtcNow, timeZone);
         }
 
         [GeneratedRegex(@"\d+(\.\d+)?")]

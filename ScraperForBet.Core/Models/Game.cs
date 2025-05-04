@@ -1,6 +1,6 @@
 ﻿namespace ScraperForBet.Core.Models
 {
-    public sealed class Match
+    public sealed class Game
     {
         public int Id { get; set; }
         public required Team Team1 { get; set; }

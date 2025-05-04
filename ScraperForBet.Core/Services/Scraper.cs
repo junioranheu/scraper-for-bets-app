@@ -3,24 +3,29 @@ using OpenQA.Selenium.Chrome;
 using ScraperForBet.Core.Helpers;
 using ScraperForBet.Core.Models;
 using System.Collections.ObjectModel;
-using static System.Net.Mime.MediaTypeNames;
+using System.Diagnostics;
 
 namespace ScraperForBet.Core.Services
 {
     public static class Scraper
     {
-        public static void Run()
+        public static FinalResponse Run()
         {
             Console.Clear();
+
+            DateTime startDate = MiscHelper.GetDateTime();
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+
             ChromeDriver driver = ScraperHelper.CreateChromeDriver();
             driver.NavigateTo(url: Constants.Url);
 
             List<Href> hrefs = Constants.MustGetAllHrefs ? driver.GetAllHrefs() : driver.GetMainHrefs();
-            List<Match> matches = [];
+            List<Game> games = [];
 
             foreach (Href href in hrefs)
             {
-                Match match = new()
+                Game game = new()
                 {
                     Id = href.Id,
                     Team1 = new(),
@@ -34,15 +39,19 @@ namespace ScraperForBet.Core.Services
                 }
 
                 driver.NavigateTo(url: href.Url);
-                driver.GetTeamsName(match);
-                driver.GetPercentPrediction(match);
+                driver.GetTeamsName(game);
+                driver.GetPercentPrediction(game);
 
-                matches.Add(match);
+                games.Add(game);
             }
 
             driver.Dispose();
+            FinalResponse finalResponse = GenerateFinalResponse(games, stopwatch, startDate);
+
+            return finalResponse;
         }
 
+        #region methods
         private static List<Href> GetAllHrefs(this ChromeDriver driver)
         {
             List<Href> hrefs = [];
@@ -126,7 +135,7 @@ namespace ScraperForBet.Core.Services
             return hrefsUnique;
         }
 
-        private static void GetTeamsName(this ChromeDriver driver, Match match)
+        private static void GetTeamsName(this ChromeDriver driver, Game game)
         {
             ReadOnlyCollection<IWebElement> teamsElements_Names = driver.GetListWebElementsByClass("fIvzGZ"); // Names;
             ReadOnlyCollection<IWebElement> teamsElements_Misc = driver.GetListWebElementsByClass("jmRURX"); // Etc;
@@ -136,16 +145,16 @@ namespace ScraperForBet.Core.Services
                 throw new Exception("There was a failure in retrieving the information for both teams");
             }
 
-            match.Team1.Image = teamsElements_Misc[0].GetAttribute("src");
-            match.Team1.Id = MiscHelper.GetIdFromTeamImageUrl(match.Team1.Image);
-            match.Team1.Name = teamsElements_Names[0].Text;
+            game.Team1.Image = teamsElements_Misc[0].GetAttribute("src");
+            game.Team1.Id = MiscHelper.GetIdFromTeamImageUrl(game.Team1.Image);
+            game.Team1.Name = teamsElements_Names[0].Text;
 
-            match.Team2.Image = teamsElements_Misc[1].GetAttribute("src");
-            match.Team2.Id = MiscHelper.GetIdFromTeamImageUrl(match.Team2.Image);
-            match.Team2.Name = teamsElements_Names[1].Text;
+            game.Team2.Image = teamsElements_Misc[1].GetAttribute("src");
+            game.Team2.Id = MiscHelper.GetIdFromTeamImageUrl(game.Team2.Image);
+            game.Team2.Name = teamsElements_Names[1].Text;
         }
 
-        private static List<double> GetPercentPrediction(this ChromeDriver driver, Match match, int exceptionCount = 0)
+        private static List<double> GetPercentPrediction(this ChromeDriver driver, Game game, int exceptionCount = 0)
         {
             const int maxTry = 3;
             double?[] predictions = new double?[3];
@@ -177,7 +186,7 @@ namespace ScraperForBet.Core.Services
                     IWebElement buttonDraw = predictionElements[1];
                     driver.ClickElementSmart(element: buttonDraw);
 
-                    driver.GetPercentPrediction(match, exceptionCount);
+                    driver.GetPercentPrediction(game, exceptionCount);
                 }
             }
 
@@ -190,15 +199,32 @@ namespace ScraperForBet.Core.Services
                 predictions[firstNullIndex.GetValueOrDefault()] = missingThirdPrediction;
             }
 
-            match.Predict.WinningPercentage_Team1 = predictions[0].GetValueOrDefault();
-            match.Predict.DrawingPercentage = predictions[1].GetValueOrDefault();
-            match.Predict.WinningPercentage_Team2 = predictions[2].GetValueOrDefault();
-            match.Team1.WinningPercentage = predictions[0].GetValueOrDefault();
-            match.Team2.WinningPercentage = predictions[2].GetValueOrDefault();
+            game.Predict.WinningPercentage_Team1 = predictions[0].GetValueOrDefault();
+            game.Predict.DrawingPercentage = predictions[1].GetValueOrDefault();
+            game.Predict.WinningPercentage_Team2 = predictions[2].GetValueOrDefault();
+            game.Team1.WinningPercentage = predictions[0].GetValueOrDefault();
+            game.Team2.WinningPercentage = predictions[2].GetValueOrDefault();
 
             List<double> filledPredictions = [.. predictions.Where(x => x.HasValue).Select(x => x.GetValueOrDefault())];
 
             return filledPredictions;
         }
+
+        private static FinalResponse GenerateFinalResponse(List<Game> games, Stopwatch stopwatch, DateTime startDate)
+        {
+            TimeSpan elapsed = stopwatch.Elapsed;
+
+            FinalResponse response = new()
+            {
+                Games = games,
+                StartDate = startDate,
+                FinishDate = MiscHelper.GetDateTime(),
+                ElapsedTotalSeconds = elapsed.TotalSeconds,
+                ElapsedTotalMinutes = elapsed.TotalMinutes
+            };
+
+            return response;
+        }
+        #endregion
     }
 }

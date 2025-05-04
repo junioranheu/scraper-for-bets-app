@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Selenium.WebDriver" Version="4.32.0" />
+    <PackageReference Include="TimeZoneConverter" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
