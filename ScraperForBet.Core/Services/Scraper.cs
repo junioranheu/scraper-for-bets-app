@@ -28,6 +28,7 @@ namespace ScraperForBet.Core.Services
                 Game game = new()
                 {
                     Id = href.Id,
+                    League = new(),
                     Team1 = new(),
                     Team2 = new(),
                     Predict = new()
@@ -39,6 +40,7 @@ namespace ScraperForBet.Core.Services
                 }
 
                 driver.NavigateTo(url: href.Url);
+                driver.GetLeagueInfos(game);
                 driver.GetTeamsName(game);
                 driver.GetPercentPrediction(game);
 
@@ -133,6 +135,49 @@ namespace ScraperForBet.Core.Services
             driver.ScrollUp();
 
             return hrefsUnique;
+        }
+
+        private static void GetLeagueInfos(this ChromeDriver driver, Game game)
+        {
+            IWebElement? leagueInfos = driver.GetListWebElementsByClass("lc_1").FirstOrDefault() ?? throw new Exception("There was a failure in retrieving the league's information");
+            ReadOnlyCollection<IWebElement> links = leagueInfos.FindElements(By.CssSelector("li a"));
+
+            if (links is null || links.Count == 0)
+            {
+                throw new Exception("There was a failure in retrieving the league's information");
+            }
+
+            if (links.Count != 3)
+            {
+                return;
+            }
+
+            // Sempre deve haver 3 itens:
+            // Ex: "Futebol" -> "Brasil" -> "Brasileirão Série B, Round 6";
+            // Isso significa que o primeiro deve ser pulado;
+            // O segundo é o país;
+            // O terceiro é a liga;
+            for (var i = 0; i < links.Count; i++)
+            {
+                string? content = links[i].Text;
+
+                if (i == 0)
+                {
+                    continue;
+                }
+                else if (i == 1)
+                {
+                    game.League.Country = content;
+                }
+                else if (i == 2)
+                {
+                    game.League.Name = content[..content.IndexOf(',')];
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
 
         private static void GetTeamsName(this ChromeDriver driver, Game game)
