@@ -1,8 +1,10 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Safari;
 using OpenQA.Selenium.Support.UI;
 using ScraperForBet.Core.Enums;
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 
 namespace ScraperForBet.Core.Helpers
 {
@@ -27,12 +29,36 @@ namespace ScraperForBet.Core.Helpers
             return driver;
         }
 
-        public static void NavigateTo(this ChromeDriver driver, string url)
+        public static SafariDriver CreateSafariDriver()
+        {
+            SafariDriverService service = SafariDriverService.CreateDefaultService();
+            SafariDriver driver = new(service);
+
+            return driver;
+        }
+
+        public static IWebDriver CreateDriverBasedOnOS()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return CreateChromeDriver();
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return CreateSafariDriver();
+            }
+            else
+            {
+                throw new NotSupportedException("Unsupported Operating System: This application only supports ChromeDriver on Windows and SafariDriver on macOS.");
+            }
+        }
+
+        public static void NavigateTo(this IWebDriver driver, string url)
         {
             driver.Navigate().GoToUrl(url);
         }
 
-        public static IWebElement GetWebElement(this ChromeDriver driver, string elementName, FindElementTypeEnum findElementType = FindElementTypeEnum.Equals, double waitTimeInSeconds = 1.5)
+        public static IWebElement GetWebElement(this IWebDriver driver, string elementName, FindElementTypeEnum findElementType = FindElementTypeEnum.Equals, double waitTimeInSeconds = 1.5)
         {
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(waitTimeInSeconds));
 
@@ -56,7 +82,7 @@ namespace ScraperForBet.Core.Helpers
             return element;
         }
 
-        public static ReadOnlyCollection<IWebElement> GetListWebElementsByDataTestId(this ChromeDriver driver, string dataTestId)
+        public static ReadOnlyCollection<IWebElement> GetListWebElementsByDataTestId(this IWebDriver driver, string dataTestId)
         {
             ReadOnlyCollection<IWebElement>? elements = driver.FindElements(By.CssSelector($"[data-testid='{dataTestId}']"));
 
@@ -68,7 +94,7 @@ namespace ScraperForBet.Core.Helpers
             return elements!;
         }
 
-        public static ReadOnlyCollection<IWebElement> GetListWebElementsByClass(this ChromeDriver driver, string className)
+        public static ReadOnlyCollection<IWebElement> GetListWebElementsByClass(this IWebDriver driver, string className)
         {
             ReadOnlyCollection<IWebElement>? elements = driver.FindElements(By.ClassName(className));
 
@@ -80,7 +106,7 @@ namespace ScraperForBet.Core.Helpers
             return elements!;
         }
 
-        public static void ClickElement(this ChromeDriver driver, IWebElement element)
+        public static void ClickElement(this IWebDriver driver, IWebElement element)
         {
             try
             {
@@ -93,7 +119,7 @@ namespace ScraperForBet.Core.Helpers
             }
         }
 
-        public static void ClickElementSmart(this ChromeDriver driver, IWebElement element)
+        public static void ClickElementSmart(this IWebDriver driver, IWebElement element)
         {
             try
             {
@@ -118,22 +144,22 @@ namespace ScraperForBet.Core.Helpers
             }
         }
 
-        public static void ScrollDown(this ChromeDriver driver)
+        public static void ScrollDown(this IWebDriver driver)
         {
             ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollTo(0, document.body.scrollHeight);");
         }
 
-        public static void ScrollDownOnly100VH(this ChromeDriver driver)
+        public static void ScrollDownOnly100VH(this IWebDriver driver)
         {
             ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollBy(0, window.innerHeight);");
         }
 
-        public static void ScrollUp(this ChromeDriver driver)
+        public static void ScrollUp(this IWebDriver driver)
         {
             ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollTo(0, 0);");
         }
 
-        public static bool IsAtBottomOfPage(this ChromeDriver driver)
+        public static bool IsAtBottomOfPage(this IWebDriver driver)
         {
             // Obtém a altura da janela visível;
             var viewportHeight = Convert.ToInt32(((IJavaScriptExecutor)driver).ExecuteScript("return window.innerHeight"));
@@ -148,7 +174,7 @@ namespace ScraperForBet.Core.Helpers
             return scrollPosition + viewportHeight >= documentHeight - 10; // Subtraímos um valor pequeno para lidar com pequenas variações;
         }
 
-        public static void Dispose(this ChromeDriver driver)
+        public static void Dispose(this IWebDriver driver)
         {
             driver.Quit();
             Environment.Exit(0);

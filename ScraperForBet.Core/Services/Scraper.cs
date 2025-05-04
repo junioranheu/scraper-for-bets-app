@@ -1,5 +1,4 @@
 ﻿using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using ScraperForBet.Core.Helpers;
 using ScraperForBet.Core.Models;
 using System.Collections.ObjectModel;
@@ -17,7 +16,7 @@ namespace ScraperForBet.Core.Services
             Stopwatch stopwatch = new();
             stopwatch.Start();
 
-            ChromeDriver driver = ScraperHelper.CreateChromeDriver();
+            IWebDriver driver = ScraperHelper.CreateDriverBasedOnOS();
             driver.NavigateTo(url: Constants.Url);
 
             List<Href> hrefs = Constants.MustGetAllHrefs ? driver.GetAllHrefs() : driver.GetMainHrefs();
@@ -54,7 +53,7 @@ namespace ScraperForBet.Core.Services
         }
 
         #region methods
-        private static List<Href> GetAllHrefs(this ChromeDriver driver)
+        private static List<Href> GetAllHrefs(this IWebDriver driver)
         {
             List<Href> hrefs = [];
 
@@ -101,7 +100,7 @@ namespace ScraperForBet.Core.Services
             return hrefsUnique;
         }
 
-        private static List<Href> GetMainHrefs(this ChromeDriver driver)
+        private static List<Href> GetMainHrefs(this IWebDriver driver)
         {
             List<Href?> hrefs = [];
 
@@ -137,7 +136,7 @@ namespace ScraperForBet.Core.Services
             return hrefsUnique;
         }
 
-        private static void GetLeagueInfos(this ChromeDriver driver, Game game)
+        private static void GetLeagueInfos(this IWebDriver driver, Game game)
         {
             IWebElement? leagueInfos = driver.GetListWebElementsByClass("lc_1").FirstOrDefault() ?? throw new Exception("There was a failure in retrieving the league's information");
             ReadOnlyCollection<IWebElement> links = leagueInfos.FindElements(By.CssSelector("li a"));
@@ -180,7 +179,7 @@ namespace ScraperForBet.Core.Services
             }
         }
 
-        private static void GetTeamsName(this ChromeDriver driver, Game game)
+        private static void GetTeamsName(this IWebDriver driver, Game game)
         {
             ReadOnlyCollection<IWebElement> teamsElements_Names = driver.GetListWebElementsByClass("fIvzGZ"); // Names;
             ReadOnlyCollection<IWebElement> teamsElements_Misc = driver.GetListWebElementsByClass("jmRURX"); // Etc;
@@ -199,7 +198,7 @@ namespace ScraperForBet.Core.Services
             game.Team2.Name = teamsElements_Names[1].Text;
         }
 
-        private static List<double> GetPercentPrediction(this ChromeDriver driver, Game game, int exceptionCount = 0)
+        private static List<double> GetPercentPrediction(this IWebDriver driver, Game game, int exceptionCount = 0)
         {
             const int maxTry = 3;
             double?[] predictions = new double?[3];
