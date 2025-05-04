@@ -41,6 +41,8 @@ namespace ScraperForBet.Core.Services
                 driver.NavigateTo(url: href.Url);
                 driver.GetLeagueInfos(game);
                 driver.GetTeamsName(game);
+                driver.GetGameScore(game);
+                driver.GetGameAbout(game);
                 driver.GetPercentPrediction(game);
 
                 games.Add(game);
@@ -66,7 +68,7 @@ namespace ScraperForBet.Core.Services
 
             while (!driver.IsAtBottomOfPage())
             {
-                ReadOnlyCollection<IWebElement> links = driver.GetListWebElementsByDataTestId("event_cell");
+                ReadOnlyCollection<IWebElement> links = driver.GetListWebElementsByDataId("event_cell");
 
                 foreach (var link in links)
                 {
@@ -106,7 +108,7 @@ namespace ScraperForBet.Core.Services
 
             driver.ScrollUp();
 
-            ReadOnlyCollection<IWebElement> links = driver.GetListWebElementsByDataTestId("event_cell");
+            ReadOnlyCollection<IWebElement> links = driver.GetListWebElementsByDataId("event_cell");
 
             foreach (var link in links)
             {
@@ -198,11 +200,53 @@ namespace ScraperForBet.Core.Services
             game.Team2.Name = teamsElements_Names[1].Text;
         }
 
+        private static void GetGameScore(this IWebDriver driver, Game game)
+        {
+            //IWebElement? about = driver.GetListWebElementsByDataId("seo-about", dataIdObject: "data-qa-id").FirstOrDefault();
+
+            //if (about is null)
+            //{
+            //    throw new Exception("There was a failure in retrieving the game's information");
+            //}
+
+            //IWebElement? leagueInfos = driver.GetListWebElementsByClass("lc_1").FirstOrDefault() ?? throw new Exception("There was a failure in retrieving the league's information");
+            //ReadOnlyCollection<IWebElement> links = leagueInfos.FindElements(By.CssSelector("li a"));
+
+            //game.Team1.Goals = 0;
+            //game.Team2.Goals = 0;
+        }
+
+        private static void GetGameAbout(this IWebDriver driver, Game game)
+        {
+            try
+            {
+                IWebElement showMoreAboutElement = driver.GetWebElement(elementName: "Show more");
+
+                if (showMoreAboutElement is not null)
+                {
+                    driver.ClickElement(showMoreAboutElement);
+                }
+            }
+            catch
+            {
+            }
+
+            IWebElement? aboutElement = driver.GetListWebElementsByDataId("seo-about", dataIdObject: "data-qa-id").FirstOrDefault();
+
+            if (aboutElement is null)
+            {
+                // throw new Exception("There was a failure in retrieving the game's information");
+                return;
+            }
+
+            game.About = aboutElement.Text;
+        }
+
         private static List<double> GetPercentPrediction(this IWebDriver driver, Game game, int exceptionCount = 0)
         {
             const int maxTry = 3;
             double?[] predictions = new double?[3];
-            ReadOnlyCollection<IWebElement> predictionElements = driver.GetListWebElementsByDataTestId("prediction_option");
+            ReadOnlyCollection<IWebElement> predictionElements = driver.GetListWebElementsByDataId("prediction_option");
 
             for (int i = 0; i < predictionElements.Count; i++)
             {

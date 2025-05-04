@@ -82,13 +82,13 @@ namespace ScraperForBet.Core.Helpers
             return element;
         }
 
-        public static ReadOnlyCollection<IWebElement> GetListWebElementsByDataTestId(this IWebDriver driver, string dataTestId)
+        public static ReadOnlyCollection<IWebElement> GetListWebElementsByDataId(this IWebDriver driver, string dataId, string dataIdObject = "data-testid")
         {
-            ReadOnlyCollection<IWebElement>? elements = driver.FindElements(By.CssSelector($"[data-testid='{dataTestId}']"));
+            ReadOnlyCollection<IWebElement>? elements = driver.FindElements(By.CssSelector($"[{dataIdObject}='{dataId}']"));
 
             if (elements is null || elements?.Count == 0)
             {
-                throw new NoSuchElementException($"Elements with data-testid '{dataTestId}' not found.");
+                throw new NoSuchElementException($"Elements with id '{dataId}' not found.");
             }
 
             return elements!;
